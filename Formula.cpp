@@ -41,41 +41,54 @@ void Formula::parse()
             char currentSymbol = currentRawTextFormula[i];
             if (
                     !std::isdigit(currentSymbol)
-                    && currentSymbol != '('
-                    && currentSymbol != '['
+                    && !isOpeningParenthesis(currentSymbol)
             ) {
-                currentFormulaPartBuffer += currentSymbol;
-                continue;
-            }
+                if (std::isupper(currentSymbol)) {
+                    currentFormulaPartBuffer += currentSymbol;
 
-            if (std::isdigit(currentSymbol)) {
-                for (int j = i;;j++) {
-                    char potentialDigit = currentRawTextFormula[j];
-                    if (
-                            !isOpeningParenthesis(potentialDigit)
-                            && !std::isalpha(potentialDigit)
-                    ) {
-                        currentFormulaPartMultiplicatorBuffer += potentialDigit;
-                    } else {
-                        i = j;
-                        break;
+                    // start with next symbol after upper letter
+                    i += 1;
+
+                    // read from text formula string symbols while they are in lower case(to read whole element name)
+                    while (!(std::isupper(currentRawTextFormula[i]) ||
+                        isOpeningParenthesis(currentRawTextFormula[i]) ||
+                        isClosingParenthesis(currentRawTextFormula[i]))) {
+                        char lowerCaseLetter = currentRawTextFormula[i];
+                        currentFormulaPartBuffer += lowerCaseLetter;
+                        i += 1;
                     }
+
+                    // parsing multiplicator
+                    currentFormulaPartMultiplicatorBuffer = currentFormulaPartBuffer;
+                    int letterCount = 0;
+                    while (std::isalpha(currentFormulaPartMultiplicatorBuffer[0])) {
+                        letterCount += 1;
+                        currentFormulaPartMultiplicatorBuffer =
+                                currentFormulaPartMultiplicatorBuffer.substr(1, currentFormulaPartMultiplicatorBuffer.size());
+                    }
+
+                    float multiplicator = currentFormulaPartMultiplicatorBuffer.size() > 0 ? std::stof(currentFormulaPartMultiplicatorBuffer) : 1;
+
+                    FormulaTreeNode* newFTN = new FormulaTreeNode(
+                        currentFormulaPartBuffer.substr(0, letterCount),
+                        multiplicator
+                    );
+
+                    walkPath.push(newFTN);
+                    ftn->getNext().push_back(
+                        newFTN
+                    );
+
+                    currentFormulaPartBuffer.erase();
+                    currentFormulaPartMultiplicatorBuffer.erase();
+                    // decrease
+                    i -= 1;
+                    continue;
                 }
-                FormulaTreeNode* newFTN = new FormulaTreeNode(
-                    currentFormulaPartBuffer,
-                    std::stof(currentFormulaPartMultiplicatorBuffer)
-                );
-
-                walkPath.push(newFTN);
-                ftn->getNext().push_back(
-                    newFTN
-                );
-
-                currentFormulaPartBuffer.erase();
-                currentFormulaPartMultiplicatorBuffer.erase();
-                continue;
             }
 
+
+            // parsing parentheis content
             if (isOpeningParenthesis(currentSymbol)) {
                 for (int j = i;; j++) {
                     char symbolBetweenParenthesis = currentRawTextFormula[j];
@@ -91,15 +104,14 @@ void Formula::parse()
                     currentFormulaPartBuffer += symbolBetweenParenthesis;
 
                     if (isValidParenthesisSequence(parenthesisSequence)) {
-                        if (std::isalpha(symbolBetweenParenthesis)) {
-                            i = j;
+                        if (std::isalpha(currentRawTextFormula[j + 1])) {
+                            i = j + 1;
                             break;
                         } else {
-                            for (int k = j;;k++) {
+                            for (int k = j + 1;;k++) {
                                 char potentialDigit = currentRawTextFormula[k];
                                 if (
-                                        !isOpeningParenthesis(potentialDigit)
-                                        && !std::isalpha(potentialDigit)
+                                        std::isdigit(potentialDigit)
                                 ) {
                                     currentFormulaPartMultiplicatorBuffer += potentialDigit;
                                 } else {
@@ -142,7 +154,7 @@ bool Formula::isValidParenthesisSequence(const std::deque<char>& pDeq)
     }
     std::deque<char> st = pDeq;
     while (!st.empty()) {
-        if (st.front() == st.back()) {
+        if (isOpeningParenthesis(st.front()) && isClosingParenthesis(st.back())) {
             st.pop_back();
             st.pop_front();
         } else {

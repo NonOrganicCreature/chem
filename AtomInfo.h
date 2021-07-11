@@ -13,6 +13,7 @@ private:
     int nuclearCharge;
     double relativeAtomMass;
 public:
+    AtomInfo(const std::string &shortName, const std::string &name, int group, int row, int period, int nuclearCharge, double relativeAtomMass);
 
     const std::string &getShortName() const;
     void setShortName(const std::string &newShortName);

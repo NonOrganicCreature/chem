@@ -4,7 +4,7 @@
 #include <string>
 #include "AtomInfo.h"
 
-static const std::map<const std::string, const AtomInfo*> AtomsInfo = {
+const std::map<const std::string, const AtomInfo*> AtomsInfo = {
     // 1
     {
         std::string("H"),
@@ -41,7 +41,7 @@ static const std::map<const std::string, const AtomInfo*> AtomsInfo = {
 
 };
 
-static const double angstrem = 1.0e-10;
-static const double Na = 6.02e23;
+const double angstrem = 1.0e-10;
+const double Na = 6.02e23;
 
 #endif // CONSTANTS_H

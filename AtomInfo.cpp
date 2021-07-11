@@ -69,3 +69,12 @@ void AtomInfo::setShortName(const std::string &newShortName)
 {
     shortName = newShortName;
 }
+
+AtomInfo::AtomInfo(const std::string &shortName, const std::string &name, int group, int row, int period, int nuclearCharge, double relativeAtomMass) : shortName(shortName),
+    name(name),
+    group(group),
+    row(row),
+    period(period),
+    nuclearCharge(nuclearCharge),
+    relativeAtomMass(relativeAtomMass)
+{}

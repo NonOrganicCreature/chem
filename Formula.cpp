@@ -1,4 +1,5 @@
 #include "Formula.h"
+#include "Constants.h"
 #include <deque>
 #include <queue>
 
@@ -30,13 +31,17 @@ void Formula::parse()
     std::deque<char> parenthesisSequence;
     std::string parenthesisBuffer;
     std::string currentFormulaPartBuffer;
-    std::string currentFormulaPartMultiplicatorBuffer;
     std::queue<FormulaTreeNode*> walkPath;
     walkPath.push(tree->getRoot());
     while(!walkPath.empty()) {
         FormulaTreeNode* ftn = walkPath.front();
         walkPath.pop();
         std::string currentRawTextFormula = ftn->getRawTextFormula();
+
+        // if at tree node we have only atom and multiplicator
+        if (isFormulaAtomary(currentRawTextFormula)) {
+            continue;
+        }
         for (int i = 0; i < currentRawTextFormula.size(); i++) {
             char currentSymbol = currentRawTextFormula[i];
             if (
@@ -46,11 +51,11 @@ void Formula::parse()
                 if (std::isupper(currentSymbol)) {
                     currentFormulaPartBuffer += currentSymbol;
 
-                    // start with next symbol after upper letter
+                    // start with next symbol after upper letter to read atom short name
                     i += 1;
 
                     // read from text formula string symbols while they are in lower case(to read whole element name)
-                    while (!(std::isupper(currentRawTextFormula[i]) ||
+                    while (currentRawTextFormula[i] && !(std::isupper(currentRawTextFormula[i]) ||
                         isOpeningParenthesis(currentRawTextFormula[i]) ||
                         isClosingParenthesis(currentRawTextFormula[i]))) {
                         char lowerCaseLetter = currentRawTextFormula[i];
@@ -58,20 +63,10 @@ void Formula::parse()
                         i += 1;
                     }
 
-                    // parsing multiplicator
-                    currentFormulaPartMultiplicatorBuffer = currentFormulaPartBuffer;
-                    int letterCount = 0;
-                    while (std::isalpha(currentFormulaPartMultiplicatorBuffer[0])) {
-                        letterCount += 1;
-                        currentFormulaPartMultiplicatorBuffer =
-                                currentFormulaPartMultiplicatorBuffer.substr(1, currentFormulaPartMultiplicatorBuffer.size());
-                    }
-
-                    float multiplicator = currentFormulaPartMultiplicatorBuffer.size() > 0 ? std::stof(currentFormulaPartMultiplicatorBuffer) : 1;
-
+                    // creating result node
                     FormulaTreeNode* newFTN = new FormulaTreeNode(
-                        currentFormulaPartBuffer.substr(0, letterCount),
-                        multiplicator
+                        getFormulaWithoutMultiplicator(currentFormulaPartBuffer),
+                        getMultiplicator(currentFormulaPartBuffer) * ftn->getMultiplicator()
                     );
 
                     walkPath.push(newFTN);
@@ -79,9 +74,9 @@ void Formula::parse()
                         newFTN
                     );
 
-                    currentFormulaPartBuffer.erase();
-                    currentFormulaPartMultiplicatorBuffer.erase();
-                    // decrease
+                    currentFormulaPartBuffer.clear();
+
+                    // while at 56 line of code increases to next symbol for checking, but for loop increases after continue too
                     i -= 1;
                     continue;
                 }
@@ -104,42 +99,36 @@ void Formula::parse()
                     currentFormulaPartBuffer += symbolBetweenParenthesis;
 
                     if (isValidParenthesisSequence(parenthesisSequence)) {
-                        if (std::isalpha(currentRawTextFormula[j + 1])) {
-                            i = j + 1;
-                            break;
-                        } else {
-                            for (int k = j + 1;;k++) {
-                                char potentialDigit = currentRawTextFormula[k];
-                                if (
-                                        std::isdigit(potentialDigit)
-                                ) {
-                                    currentFormulaPartMultiplicatorBuffer += potentialDigit;
-                                } else {
-                                    i = k;
-                                    break;
-                                }
+                        // if next after parenthesis is digit then parse rest of the formula (multiplicator)
+                        if (std::isdigit(rawTextFormula[j + 1])) {
+                            j += 1;
+                            while(std::isdigit(rawTextFormula[j])) {
+                                currentFormulaPartBuffer += rawTextFormula[j];
+                                j += 1;
                             }
-                            break;
                         }
+
+                        // creating result node
+                        FormulaTreeNode* newFTN = new FormulaTreeNode(
+                            getTextFormulaWithoutParenthesis(getFormulaWithoutMultiplicator(currentFormulaPartBuffer)),
+                            getMultiplicator(currentFormulaPartBuffer) * ftn->getMultiplicator()
+                        );
+
+                        walkPath.push(newFTN);
+                        ftn->getNext().push_back(
+                            newFTN
+                        );
+
+                        currentFormulaPartBuffer.clear();
+                        i = j;
+                        break;
                     }
                 }
-
-                FormulaTreeNode* newFTN = new FormulaTreeNode(
-                    currentFormulaPartBuffer,
-                    std::stof(currentFormulaPartMultiplicatorBuffer)
-                );
-
-                walkPath.push(newFTN);
-                ftn->getNext().push_back(
-                    newFTN
-                );
-
-                currentFormulaPartBuffer.erase();
-                currentFormulaPartMultiplicatorBuffer.erase();
             }
         }
     }
 }
+
 
 
 bool Formula::isClosingParenthesis(const char& symbol)
@@ -165,6 +154,45 @@ bool Formula::isValidParenthesisSequence(const std::deque<char>& pDeq)
     return true;
 }
 
+std::string Formula::getTextFormulaWithoutParenthesis(const std::string &textFormula)
+{
+    return textFormula.substr(1, textFormula.size() - 2);
+}
+
+float Formula::getMultiplicator(const std::string &textFormula)
+{
+    int currentIndex = textFormula.size() - 1;
+    if (!std::isdigit(textFormula[currentIndex])) {
+        return 1;
+    }
+
+    std::string multiplicatorBuffer = "";
+    while (std::isdigit(textFormula[currentIndex])) {
+        multiplicatorBuffer += textFormula[currentIndex];
+        currentIndex -= 1;
+    }
+
+    std::string multiplicatorBufferReversed = "";
+    for (int i = multiplicatorBuffer.size() - 1; i >= 0; i--) {
+        multiplicatorBufferReversed += multiplicatorBuffer[i];
+    }
+    return std::stof(multiplicatorBufferReversed);
+}
+
+std::string Formula::getFormulaWithoutMultiplicator(const std::string &textFormulaWithMultiplicator)
+{
+    int currentIndex = textFormulaWithMultiplicator.size() - 1;
+    if (!std::isdigit(textFormulaWithMultiplicator[currentIndex])) {
+        return textFormulaWithMultiplicator;
+    }
+
+    while (std::isdigit(textFormulaWithMultiplicator[currentIndex])) {
+        currentIndex -= 1;
+    }
+
+    return textFormulaWithMultiplicator.substr(0, currentIndex + 1);
+}
+
 bool Formula::isOpeningParenthesis(const char& symbol)
 {
     return symbol == '(' || symbol == '[';
@@ -174,4 +202,9 @@ Formula::Formula(const std::string& rawTextFormula)
 {
     this->rawTextFormula = rawTextFormula;
     this->treeView = new FormulaTree(rawTextFormula);
+}
+
+bool Formula::isFormulaAtomary(const std::string &formula)
+{
+    return AtomsInfo.find(formula)->second;
 }

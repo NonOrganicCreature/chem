@@ -32,15 +32,15 @@ set(PROJECT_SOURCES
         mainwindow.cpp
         mainwindow.h
         mainwindow.ui
-        Formula.h
-        AtomInfo.cpp
-        AtomInfo.h
-        Constants.h
+        formula.h
+        atomInfo.cpp
+        atomInfo.h
+        constants.h
         formulatree.h
         formulatree.cpp
-        Formula.cpp
-        Formulatreenode.h
-        Formulatreenode.cpp
+        formula.cpp
+        formulatreenode.h
+        formulatreenode.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

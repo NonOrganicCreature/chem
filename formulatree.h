@@ -2,6 +2,7 @@
 #define FORMULATREE_H
 
 #include <string>
+#include <vector>
 #include "formulatreenode.h"
 class FormulaTree
 {
@@ -12,6 +13,8 @@ public:
     FormulaTree(const std::string& rootRawTextFormula);
     FormulaTreeNode *getRoot() const;
     void setRoot(FormulaTreeNode *newRoot);
+    std::vector<FormulaTreeNode*> getLeaves();
+    void printLeaves();
 };
 
 #endif // FORMULATREE_H

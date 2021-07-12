@@ -2,7 +2,7 @@
 #define CONSTANTS_H
 #include <map>
 #include <string>
-#include "AtomInfo.h"
+#include "atomInfo.h"
 
 const std::map<const std::string, const AtomInfo*> AtomsInfo = {
     // 1

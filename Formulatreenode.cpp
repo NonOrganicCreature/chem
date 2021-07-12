@@ -1,4 +1,4 @@
-#include "Formulatreenode.h"
+#include "formulatreenode.h"
 
 const std::string &FormulaTreeNode::getRawTextFormula() const
 {

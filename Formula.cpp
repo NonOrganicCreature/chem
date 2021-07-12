@@ -1,7 +1,8 @@
-#include "Formula.h"
-#include "Constants.h"
+#include "formula.h"
+#include "constants.h"
 #include <deque>
 #include <queue>
+#include <vector>
 
 const std::string &Formula::getRawTextFormula() const
 {
@@ -23,13 +24,26 @@ void Formula::setTreeView(FormulaTree *newTreeView)
     treeView = newTreeView;
 }
 
+float Formula::getMolecularMass()
+{
+    std::vector<FormulaTreeNode*> leaves = this->treeView->getLeaves();
+    float resultMass = 0;
+    for (FormulaTreeNode* leaf : leaves) {
+        resultMass +=
+                AtomsInfo.find(leaf->getRawTextFormula())
+                    ->second
+                    ->getRelativeAtomMass() * leaf->getMultiplicator();
+    }
+
+    return resultMass;
+}
+
 
 
 void Formula::parse()
 {
     FormulaTree* tree = this->getTreeView();
     std::deque<char> parenthesisSequence;
-    std::string parenthesisBuffer;
     std::string currentFormulaPartBuffer;
     std::queue<FormulaTreeNode*> walkPath;
     walkPath.push(tree->getRoot());
@@ -82,7 +96,6 @@ void Formula::parse()
                 }
             }
 
-
             // parsing parentheis content
             if (isOpeningParenthesis(currentSymbol)) {
                 for (int j = i;; j++) {
@@ -92,7 +105,6 @@ void Formula::parse()
                         isOpeningParenthesis(symbolBetweenParenthesis)
                         || isClosingParenthesis(symbolBetweenParenthesis)
                     ) {
-                        parenthesisBuffer.push_back(symbolBetweenParenthesis);
                         parenthesisSequence.push_back(symbolBetweenParenthesis);
                     }
 

@@ -1,4 +1,4 @@
-#include "AtomInfo.h"
+#include "atomInfo.h"
 
 const std::string &AtomInfo::getName() const
 {

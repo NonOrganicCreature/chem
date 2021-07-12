@@ -3,8 +3,9 @@
 
 #include <string>
 #include <deque>
-#include "AtomInfo.h"
+#include "atomInfo.h"
 #include "formulatree.h"
+
 class Formula {
 private:
     std::string rawTextFormula;

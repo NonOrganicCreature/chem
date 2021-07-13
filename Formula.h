@@ -27,6 +27,8 @@ public:
     void setTreeView(FormulaTree *newTreeView);
 
     float getMolecularMass();
+    float getMolarMass();
+    float getMolecularMassPercentageOfAtom(const AtomInfo* target);
     std::vector<AtomInfo> getAllAtomsMass();
     void parse();
 };

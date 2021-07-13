@@ -38,6 +38,37 @@ float Formula::getMolecularMass()
     return resultMass;
 }
 
+float Formula::getMolarMass()
+{
+    return this->getMolarMass();
+}
+
+float Formula::getMolecularMassPercentageOfAtom(const AtomInfo* target)
+{
+    std::vector<FormulaTreeNode*> leaves = this->treeView->getLeaves();
+    float totalMass = 0;
+    float targetMass = 0;
+    for (FormulaTreeNode* leaf : leaves) {
+        if (leaf->getRawTextFormula() == target->getShortName()) {
+            targetMass += AtomsInfo.find(leaf->getRawTextFormula())
+                    ->second
+                    ->getRelativeAtomMass() * leaf->getMultiplicator();
+        }
+        totalMass +=
+                AtomsInfo.find(leaf->getRawTextFormula())
+                    ->second
+                    ->getRelativeAtomMass() * leaf->getMultiplicator();
+    }
+
+    if (targetMass == 0) {
+        return 0;
+    }
+
+    return (targetMass / totalMass) * 100 ;
+}
+
+
+
 
 
 void Formula::parse()

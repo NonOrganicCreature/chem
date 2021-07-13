@@ -14,5 +14,6 @@ int main(int argc, char *argv[])
     formula.getTreeView()->printLeaves();
     w.show();
     std::cout << "\nMolecular mass: " << formula.getMolecularMass();
+    std::cout << "\nPercentage of H: " << formula.getMolecularMassPercentageOfAtom(AtomsInfo.find("H")->second);
     return a.exec();
 }

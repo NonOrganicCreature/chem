@@ -12,6 +12,7 @@ const std::string &Formula::getRawTextFormula() const
 void Formula::setRawTextFormula(const std::string &newRawTextFormula)
 {
     rawTextFormula = newRawTextFormula;
+    this->treeView = new FormulaTree(newRawTextFormula);
 }
 
 FormulaTree *Formula::getTreeView() const
@@ -87,6 +88,13 @@ void Formula::parse()
         if (isFormulaAtomary(currentRawTextFormula)) {
             continue;
         }
+
+        // if not found in DB of elements
+        if (currentRawTextFormula.size() < 3 && !isFormulaAtomary(getFormulaWithoutMultiplicator(currentRawTextFormula))) {
+            emit parseResult(-3, "Info about atomary not found");
+            return;
+        }
+
         for (int i = 0; i < currentRawTextFormula.size(); i++) {
             char currentSymbol = currentRawTextFormula[i];
             if (
@@ -107,6 +115,7 @@ void Formula::parse()
                         currentFormulaPartBuffer += lowerCaseLetter;
                         i += 1;
                     }
+
 
                     // creating result node
                     FormulaTreeNode* newFTN = new FormulaTreeNode(
@@ -141,6 +150,12 @@ void Formula::parse()
 
                     currentFormulaPartBuffer += symbolBetweenParenthesis;
 
+                    // not valid sequence
+                    if (parenthesisSequence.size() >= currentRawTextFormula.size()) {
+                        emit parseResult(-2, "Not a valid parenthesis sequence.");
+                        return;
+                    }
+
                     if (isValidParenthesisSequence(parenthesisSequence)) {
                         // if next after parenthesis is digit then parse rest of the formula (multiplicator)
                         if (std::isdigit(rawTextFormula[j + 1])) {
@@ -170,6 +185,16 @@ void Formula::parse()
             }
         }
     }
+
+    emit parseResult(1, "Formula parsed successfully");
+
+}
+
+void Formula::setFormulaText(std::string text)
+{
+    qDebug() << "setFormulaText handler called: " << QString::fromStdString(text);
+    this->setRawTextFormula(text);
+    this->parse();
 }
 
 

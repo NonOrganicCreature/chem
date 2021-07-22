@@ -41,7 +41,7 @@ float Formula::getMolecularMass()
 
 float Formula::getMolarMass()
 {
-    return this->getMolarMass();
+    return this->getMolecularMass() * Na;
 }
 
 float Formula::getMolecularMassPercentageOfAtom(const AtomInfo* target)
@@ -78,7 +78,20 @@ void Formula::parse()
     std::deque<char> parenthesisSequence;
     std::string currentFormulaPartBuffer;
     std::queue<FormulaTreeNode*> walkPath;
-    walkPath.push(tree->getRoot());
+    if (isFormulaAtomary(tree->getRoot()->getRawTextFormula())) {
+        // if input is only atomary symbol without multiplicator
+        FormulaTreeNode* newFTN = new FormulaTreeNode(
+            tree->getRoot()->getRawTextFormula(),
+            1
+        );
+        tree->getRoot()->getNext().push_back(
+            newFTN
+        );
+        emit parseResult(1, "Formula parsed successfully");
+        return;
+    } else {
+        walkPath.push(tree->getRoot());
+    }
     while(!walkPath.empty()) {
         FormulaTreeNode* ftn = walkPath.front();
         walkPath.pop();
@@ -94,6 +107,8 @@ void Formula::parse()
             emit parseResult(-3, "Info about atomary not found");
             return;
         }
+
+        currentRawTextFormula = getTextFormulaWithoutParenthesis(ftn->getRawTextFormula());
 
         for (int i = 0; i < currentRawTextFormula.size(); i++) {
             char currentSymbol = currentRawTextFormula[i];
@@ -168,7 +183,7 @@ void Formula::parse()
 
                         // creating result node
                         FormulaTreeNode* newFTN = new FormulaTreeNode(
-                            getTextFormulaWithoutParenthesis(getFormulaWithoutMultiplicator(currentFormulaPartBuffer)),
+                            getFormulaWithoutMultiplicator(currentFormulaPartBuffer),
                             getMultiplicator(currentFormulaPartBuffer) * ftn->getMultiplicator()
                         );
 
@@ -178,7 +193,7 @@ void Formula::parse()
                         );
 
                         currentFormulaPartBuffer.clear();
-                        i = j;
+                        i = j - 1;
                         break;
                     }
                 }
@@ -224,6 +239,9 @@ bool Formula::isValidParenthesisSequence(const std::deque<char>& pDeq)
 
 std::string Formula::getTextFormulaWithoutParenthesis(const std::string &textFormula)
 {
+    if (textFormula[0] != '(') {
+        return textFormula;
+    }
     return textFormula.substr(1, textFormula.size() - 2);
 }
 
